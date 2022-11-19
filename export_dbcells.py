@@ -25,12 +25,30 @@ from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
+from qgis.utils import iface
+
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
 from .export_dbcells_dialog import ExportDBCellsDialog
 import os.path
 
+'''
+plugin_dir = os.path.dirname(__file__)
+
+try:
+    import pip
+except:
+    execfile(os.path.join(plugin_dir, get_pip.py))
+    import pip
+    # just in case the included version is old
+    pip.main(['install','--upgrade','pip'])
+
+try:
+    import simpot
+except:
+    pip.main(['install', 'simpot'])
+'''
 
 class ExportDBCells:
     """QGIS Plugin Implementation."""
@@ -61,7 +79,7 @@ class ExportDBCells:
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&ExportDBcells')
+        self.menu = self.tr(u'&DBCels Plugin')
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
@@ -174,8 +192,8 @@ class ExportDBCells:
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
-            self.iface.removePluginMenu(
-                self.tr(u'&ExportDBcells'),
+            self.iface.removePluginVectorMenu(
+                self.tr(u'&DBCels Plugin'),
                 action)
             self.iface.removeToolBarIcon(action)
 
@@ -189,6 +207,12 @@ class ExportDBCells:
             self.first_start = False
             self.dlg = ExportDBCellsDialog()
 
+        
+        layer = iface.activeLayer()
+        for field in layer.fields():
+            print(field.name(), field.typeName())
+            self.dlg.comboID.addItem(field.name())
+        
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop
@@ -197,4 +221,5 @@ class ExportDBCells:
         if result:
             # Do something useful here - delete the line containing pass and
             # substitute with your code.
+            #self.dlg.labelID.setText("olA")
             pass
