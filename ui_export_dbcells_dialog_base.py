@@ -59,6 +59,7 @@ class Ui_ExportDBCellsDialogBase(object):
         self.verticalLayout_2 = QtWidgets.QVBoxLayout()
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.checkSelected = QtWidgets.QCheckBox(ExportDBCellsDialogBase)
+        self.checkSelected.setChecked(True)
         self.checkSelected.setObjectName("checkSelected")
         self.verticalLayout_2.addWidget(self.checkSelected)
         self.checkGeometries = QtWidgets.QCheckBox(ExportDBCellsDialogBase)

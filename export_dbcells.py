@@ -23,7 +23,7 @@
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction,QFileDialog, QCheckBox
+from qgis.PyQt.QtWidgets import QAction,QFileDialog, QCheckBox, QComboBox
 
 from qgis.core import (
   QgsGeometry,
@@ -74,12 +74,16 @@ except:
 
 from simpot import serialize_to_rdf, serialize_to_rdf_file, RdfsClass, BNamespace, graph
 
-from rdflib import Namespace, Literal, URIRef,RDF
+from rdflib import Namespace, Literal, URIRef,RDF, Graph
 from rdflib.namespace import DC, FOAF
 
+namespaces = {
+    'cell':  (Namespace("http://purl.org/ontology/dbcells/cells#"), 'turtle'),
+    'geo' : (Namespace ("http://www.opengis.net/ont/geosparql#"), 'xml'),
+}
 
-CELL = Namespace("http://purl.org/ontology/dbcells/cells#")
-GEO = Namespace ("http://www.opengis.net/ont/geosparql#")
+CELL = namespaces['cell'][0]
+GEO = namespaces['geo'][0]
 
 
 class Cell ():
@@ -129,6 +133,8 @@ class ExportDBCells:
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
+
+        self.loadVocabularies() # se demorar muito, nao sei o que pode acontecer :(
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -242,6 +248,11 @@ class ExportDBCells:
                 action)
             self.iface.removeToolBarIcon(action)
 
+    def vocabulariesCombo(self):
+        comboBox = QComboBox()
+        for attr in self.vocabularies:
+            comboBox.addItem(attr)
+        return comboBox
 
     def run(self):
         """Run method that performs all the real work"""
@@ -265,7 +276,10 @@ class ExportDBCells:
             self.dlg.comboID.addItem(field.name())
             checkbox = QCheckBox(field.name())
             self.dlg.tableAttributes.setCellWidget(i, 0, checkbox)
+            self.dlg.tableAttributes.setCellWidget(i, 1, self.vocabulariesCombo())
             i += 1
+
+ 
         
         self.dlg.buttonTTL.clicked.connect(self.outputFile)
 
@@ -311,7 +325,6 @@ class ExportDBCells:
                 cell['asWkt'] = pol.polygonN(0).asWkt()
 
             cells.append (cell)
-            print (cell)
         fileName = self.dlg.lineTTL.text()
         self.iface.messageBar().pushMessage(
             "Success", "Output file written at " + fileName,
@@ -322,3 +335,30 @@ class ExportDBCells:
     
     def close(self):
         self.dlg.setVisible(False)
+
+    def loadVocabulary(self, namespace, format, key):
+        #namespace = "http://purl.org/ontology/dbcells/cells#"
+        g = Graph()
+        g.parse(namespace, format=format)
+        q = """
+            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+            SELECT ?p
+            WHERE {
+                ?p rdf:type owl:DatatypeProperty.
+            }
+        """
+
+        # Apply the query to the graph and iterate through results
+        for r in g.query(q):
+            attr = r["p"].split("#") 
+            name = key+":"+attr[1]
+            self.vocabularies.append(name)
+            #vs.append(key+":"+attr[1])
+    
+
+    def loadVocabularies(self):
+        self.vocabularies = []
+        for key, value in namespaces.items():
+            self.loadVocabulary(value[0], value[1], key)
