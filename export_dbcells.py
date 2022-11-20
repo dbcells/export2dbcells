@@ -85,19 +85,23 @@ namespaces = {
 CELL = namespaces['cell'][0]
 GEO = namespaces['geo'][0]
 
-
+#https://stackoverflow.com/questions/2466191/set-attributes-from-dictionary-in-python
 class Cell ():
     
     asWkt = GEO.asWKT
-    resolution = CELL.resolution
     
     @RdfsClass(CELL.Cell,"http://www.dbcells.org/epsg4326/")
     @BNamespace('geo', GEO)
     @BNamespace('cells', CELL)
     def __init__(self, dict):
         self.id = dict["id"]
+        dict.pop("id")
         if ('asWkt' in dict):
             self.asWkt = Literal(dict["asWkt"])
+            dict.pop('asWkt')
+
+        for key in dict:
+            setattr(self, key, Literal(dict[key]))
 
 class ExportDBCells:
     """QGIS Plugin Implementation."""
@@ -279,8 +283,6 @@ class ExportDBCells:
             self.dlg.tableAttributes.setCellWidget(i, 1, self.vocabulariesCombo())
             i += 1
 
- 
-        
         self.dlg.buttonTTL.clicked.connect(self.outputFile)
 
         self.dlg.buttonBox.accepted.connect(self.saveFile)
@@ -304,6 +306,21 @@ class ExportDBCells:
         self.dlg.lineTTL.setText(self.file_name)
 
     def saveFile(self):
+
+        saveAttrs = {}
+        for row in range(self.dlg.tableAttributes.rowCount()): 
+            check = self.dlg.tableAttributes.cellWidget(row, 0) 
+            if check.isChecked():
+                combo = self.dlg.tableAttributes.cellWidget(row, 1)
+                class_attr = check.text()
+                rdf = combo.currentText().split(":")
+                namespace = namespaces[rdf[0]][0]
+                rdf_attr = rdf[1]
+                saveAttrs[class_attr] = rdf_attr
+                setattr(Cell,class_attr, namespace[rdf_attr])
+                #print(Cell,class_attr, rdf[0],  namespace, rdf_attr)
+                
+
         layer = self.iface.activeLayer()
 
         if self.dlg.checkSelected.isChecked():
@@ -323,6 +340,9 @@ class ExportDBCells:
                 pol = QgsMultiPolygon()
                 pol.fromWkt (feature.geometry().asWkt())
                 cell['asWkt'] = pol.polygonN(0).asWkt()
+
+            for key in saveAttrs:
+                cell[key] = feature[key]
 
             cells.append (cell)
         fileName = self.dlg.lineTTL.text()
