@@ -23,7 +23,23 @@
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction,QFileDialog
+
+from qgis.core import (
+  QgsGeometry,
+  QgsGeometryCollection,
+  QgsPoint,
+  QgsPointXY,
+  QgsWkbTypes,
+  QgsProject,
+  QgsFeatureRequest,
+  QgsVectorLayer,
+  QgsDistanceArea,
+  QgsUnitTypes,
+  QgsCoordinateTransform,
+  QgsMultiPolygon,
+  QgsCoordinateReferenceSystem
+)
 
 from qgis.utils import iface
 
@@ -33,7 +49,7 @@ from .resources import *
 from .export_dbcells_dialog import ExportDBCellsDialog
 import os.path
 
-'''
+
 plugin_dir = os.path.dirname(__file__)
 
 try:
@@ -48,7 +64,35 @@ try:
     import simpot
 except:
     pip.main(['install', 'simpot'])
-'''
+
+try:
+    import rdflib
+except:
+    pip.main(['install', 'rdflib'])
+
+
+from simpot import serialize_to_rdf, serialize_to_rdf_file, RdfsClass, BNamespace, graph
+
+from rdflib import Namespace, Literal, URIRef,RDF
+from rdflib.namespace import DC, FOAF
+
+
+CELL = Namespace("http://purl.org/ontology/dbcells/cells#")
+GEO = Namespace ("http://www.opengis.net/ont/geosparql#")
+
+
+class Cell ():
+    
+    asWkt = GEO.asWKT
+    resolution = CELL.resolution
+    
+    @RdfsClass(CELL.Cell,"http://www.dbcells.org/epsg4326/")
+    @BNamespace('geo', GEO)
+    @BNamespace('cells', CELL)
+    def __init__(self, dict):
+        self.id = dict["id"]
+        self.asWkt = Literal(dict["asWkt"])
+        #self.resolution = Literal(dict["res"])
 
 class ExportDBCells:
     """QGIS Plugin Implementation."""
@@ -208,11 +252,16 @@ class ExportDBCells:
             self.dlg = ExportDBCellsDialog()
 
         
-        layer = iface.activeLayer()
+        layer = self.iface.activeLayer()
         for field in layer.fields():
             print(field.name(), field.typeName())
             self.dlg.comboID.addItem(field.name())
         
+        self.dlg.buttonTTL.clicked.connect(self.outputFile)
+
+        self.dlg.buttonBox.accepted.connect(self.saveFile)
+        self.dlg.buttonBox.rejected.connect(self.close)
+
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop
@@ -223,3 +272,25 @@ class ExportDBCells:
             # substitute with your code.
             #self.dlg.labelID.setText("olA")
             pass
+
+    def outputFile (self):
+        self.file_name=str(QFileDialog.getSaveFileName(caption="Defining output file", filter="Terse RDF Triple Language(*.ttl)")[0])
+        self.dlg.lineTTL.setText(self.file_name)
+
+    def saveFile(self):
+        layer = self.iface.activeLayer()
+        features = layer.getFeatures()
+        dados = []
+        for feature in features:
+            pol = QgsMultiPolygon()
+            pol.fromWkt (feature.geometry().asWkt())
+            dados.append ({
+                "id": str(feature["url_id"]),
+                "asWkt" : pol.polygonN(0).asWkt(),
+                "res" : str(feature["resolution"]),
+            })
+
+        serialize_to_rdf_file(dados, Cell, self.dlg.lineTTL.text())
+    
+    def close(self):
+        self.dlg.setVisible(False)
