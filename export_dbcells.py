@@ -23,7 +23,7 @@
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction,QFileDialog
+from qgis.PyQt.QtWidgets import QAction,QFileDialog, QCheckBox
 
 from qgis.core import (
   QgsGeometry,
@@ -252,11 +252,20 @@ class ExportDBCells:
             self.first_start = False
             self.dlg = ExportDBCellsDialog()
 
-        
         layer = self.iface.activeLayer()
-        for field in layer.fields():
-            print(field.name(), field.typeName())
+        fields = layer.fields()
+        
+        
+        self.dlg.tableAttributes.setRowCount(len(fields))
+        self.dlg.tableAttributes.setColumnCount(2)
+        self.dlg.tableAttributes.setHorizontalHeaderLabels(["Name", "Vocabulary"])
+        
+        i = 0
+        for field in fields:
             self.dlg.comboID.addItem(field.name())
+            checkbox = QCheckBox(field.name())
+            self.dlg.tableAttributes.setCellWidget(i, 0, checkbox)
+            i += 1
         
         self.dlg.buttonTTL.clicked.connect(self.outputFile)
 
@@ -273,6 +282,8 @@ class ExportDBCells:
             # substitute with your code.
             #self.dlg.labelID.setText("olA")
             pass
+
+
 
     def outputFile (self):
         self.file_name=str(QFileDialog.getSaveFileName(caption="Defining output file", filter="Terse RDF Triple Language(*.ttl)")[0])

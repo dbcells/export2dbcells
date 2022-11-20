@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/home/sergio/.local/share/QGIS/QGIS3/profiles/default/python/plugins/export_dbcells/export_dbcells_dialog_base.ui'
+# Form implementation generated from reading ui file '/home/sergio/.local/share/QGIS/QGIS3/profiles/default/python/plugins/export2dbcells/export_dbcells_dialog_base.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.6
 #
@@ -67,8 +67,10 @@ class Ui_ExportDBCellsDialogBase(object):
         self.atributos = QtWidgets.QLabel(ExportDBCellsDialogBase)
         self.atributos.setObjectName("atributos")
         self.verticalLayout_2.addWidget(self.atributos)
-        self.tableAttributes = QtWidgets.QTableView(ExportDBCellsDialogBase)
+        self.tableAttributes = QtWidgets.QTableWidget(ExportDBCellsDialogBase)
         self.tableAttributes.setObjectName("tableAttributes")
+        self.tableAttributes.setColumnCount(0)
+        self.tableAttributes.setRowCount(0)
         self.verticalLayout_2.addWidget(self.tableAttributes)
         self.formLayout.addLayout(self.verticalLayout_2)
         self.horizontalLayout_5 = QtWidgets.QHBoxLayout()
