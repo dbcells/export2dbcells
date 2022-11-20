@@ -31,6 +31,7 @@ from qgis.core import (
   QgsPoint,
   QgsPointXY,
   QgsWkbTypes,
+  Qgis,
   QgsProject,
   QgsFeatureRequest,
   QgsVectorLayer,
@@ -91,8 +92,8 @@ class Cell ():
     @BNamespace('cells', CELL)
     def __init__(self, dict):
         self.id = dict["id"]
-        self.asWkt = Literal(dict["asWkt"])
-        #self.resolution = Literal(dict["res"])
+        if ('asWkt' in dict):
+            self.asWkt = Literal(dict["asWkt"])
 
 class ExportDBCells:
     """QGIS Plugin Implementation."""
@@ -279,18 +280,34 @@ class ExportDBCells:
 
     def saveFile(self):
         layer = self.iface.activeLayer()
-        features = layer.getFeatures()
-        dados = []
+
+        if self.dlg.checkSelected.isChecked():
+            features = layer.selectedFeatures() 
+        else:
+            features = layer.getFeatures()
+
+        cells = []
         for feature in features:
             pol = QgsMultiPolygon()
             pol.fromWkt (feature.geometry().asWkt())
-            dados.append ({
-                "id": str(feature["url_id"]),
-                "asWkt" : pol.polygonN(0).asWkt(),
-                "res" : str(feature["resolution"]),
-            })
+            cell = {
+                "id": str(feature[self.dlg.comboID.currentText()])
+            }
+            if self.dlg.checkGeometries.isChecked():
+                features = layer.selectedFeatures() 
+                pol = QgsMultiPolygon()
+                pol.fromWkt (feature.geometry().asWkt())
+                cell['asWkt'] = pol.polygonN(0).asWkt()
 
-        serialize_to_rdf_file(dados, Cell, self.dlg.lineTTL.text())
+            cells.append (cell)
+            print (cell)
+        fileName = self.dlg.lineTTL.text()
+        self.iface.messageBar().pushMessage(
+            "Success", "Output file written at " + fileName,
+            level=Qgis.Success, duration=3
+        )
+
+        serialize_to_rdf_file(cells, Cell, fileName)
     
     def close(self):
         self.dlg.setVisible(False)
