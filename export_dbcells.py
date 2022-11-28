@@ -78,8 +78,9 @@ from rdflib import Namespace, Literal, URIRef,RDF, Graph
 from rdflib.namespace import DC, FOAF
 
 namespaces = {
-    'cell':  (Namespace("http://purl.org/ontology/dbcells/cells#"), 'turtle'),
+    'cell': (Namespace("http://purl.org/ontology/dbcells/cells#"), 'turtle'),
     'geo' : (Namespace ("http://www.opengis.net/ont/geosparql#"), 'xml'),
+    'amz' : (Namespace ("http://purl.org/ontology/dbcells/amazon"), "ttl")
 }
 
 CELL = namespaces['cell'][0]
@@ -336,7 +337,6 @@ class ExportDBCells:
                 "id": str(feature[self.dlg.comboID.currentText()])
             }
             if self.dlg.checkGeometries.isChecked():
-                features = layer.selectedFeatures() 
                 pol = QgsMultiPolygon()
                 pol.fromWkt (feature.geometry().asWkt())
                 cell['asWkt'] = pol.polygonN(0).asWkt()
@@ -359,7 +359,7 @@ class ExportDBCells:
     def loadVocabulary(self, namespace, format, key):
         #namespace = "http://purl.org/ontology/dbcells/cells#"
         g = Graph()
-        g.parse(namespace, format=format)
+        g.parse(str(namespace), format=format)
         q = """
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX owl: <http://www.w3.org/2002/07/owl#>
