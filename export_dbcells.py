@@ -56,7 +56,7 @@ plugin_dir = os.path.dirname(__file__)
 try:
     import pip
 except:
-    execfile(os.path.join(plugin_dir, get_pip.py))
+    exec(open(os.path.join(plugin_dir, "get_pip.py")).read())
     import pip
     # just in case the included version is old
     pip.main(['install','--upgrade','pip'])
@@ -133,7 +133,7 @@ class ExportDBCells:
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&DBCels Plugin')
+        self.menu = self.tr(u'&DBCells')
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
@@ -249,7 +249,7 @@ class ExportDBCells:
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
             self.iface.removePluginVectorMenu(
-                self.tr(u'&DBCels Plugin'),
+                self.tr(u'&DBCells'),
                 action)
             self.iface.removeToolBarIcon(action)
 
