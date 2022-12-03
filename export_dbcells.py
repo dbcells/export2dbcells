@@ -80,11 +80,13 @@ from rdflib.namespace import DC, FOAF
 namespaces = {
     'cell': (Namespace("http://purl.org/ontology/dbcells/cells#"), 'turtle'),
     'geo' : (Namespace ("http://www.opengis.net/ont/geosparql#"), 'xml'),
-    'amz' : (Namespace ("http://purl.org/ontology/dbcells/amazon"), "ttl")
+    'amz' : (Namespace ("http://purl.org/ontology/dbcells/amazon"), "ttl"),
+    'sdmx' : (Namespace ("http://purl.org/linked-data/sdmx/2009/dimension"), 'ttl'),
 }
 
 CELL = namespaces['cell'][0]
 GEO = namespaces['geo'][0]
+SDMX = namespaces['sdmx'][0]
 
 #https://stackoverflow.com/questions/2466191/set-attributes-from-dictionary-in-python
 class Cell ():
@@ -94,6 +96,7 @@ class Cell ():
     @RdfsClass(CELL.Cell,"http://www.dbcells.org/epsg4326/")
     @BNamespace('geo', GEO)
     @BNamespace('cells', CELL)
+    @BNamespace('sdmx', SDMX)
     def __init__(self, dict):
         self.id = dict["id"]
         dict.pop("id")
@@ -365,8 +368,11 @@ class ExportDBCells:
             PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
             SELECT ?p
-            WHERE {
-                ?p rdf:type owl:DatatypeProperty.
+            WHERE    
+            {
+               { ?p rdf:type owl:DatatypeProperty} UNION
+               { ?p rdf:type owl:ObjectProperty} UNION
+               { ?p rdf:type rdf:Property}    
             }
         """
 
