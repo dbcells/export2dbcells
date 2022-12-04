@@ -80,8 +80,8 @@ from rdflib.namespace import DC, FOAF
 namespaces = {
     'cell': (Namespace("http://purl.org/ontology/dbcells/cells#"), 'turtle'),
     'geo' : (Namespace ("http://www.opengis.net/ont/geosparql#"), 'xml'),
-    'amz' : (Namespace ("http://purl.org/ontology/dbcells/amazon"), "ttl"),
-    'sdmx' : (Namespace ("http://purl.org/linked-data/sdmx/2009/dimension"), 'ttl'),
+    'amz' : (Namespace ("http://purl.org/ontology/dbcells/amazon#"), "ttl"),
+    'sdmx' : (Namespace ("http://purl.org/linked-data/sdmx/2009/dimension#"), 'ttl'),
 }
 
 CELL = namespaces['cell'][0]
